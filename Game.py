@@ -21,7 +21,7 @@ class Game:
 		self.CPUMoveError = False
 		self.PlayerMoveError = False
 		self.isCheck = False
-		self.winner = "Me"
+		self.winner = "No one"
 
 	def setUp(self):
 		'''
@@ -39,7 +39,6 @@ class Game:
 		'''
 		Calls board_recognition to take image and initialize Board
 		'''
-
 		boardRec = board_Recognition(self.camera)
 		self.board = boardRec.initialize_Board()
 		self.board.assignState()

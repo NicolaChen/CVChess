@@ -12,14 +12,14 @@ class Application(tk.Tk):
 	'''
 	This class controls the Graphical User Interface
 	'''
-	def __init__(self,*args, **kwargs):
+	def __init__(self, *args, **kwargs):
 
-		tk.Tk.__init__(self,*args,**kwargs)
+		tk.Tk.__init__(self, *args, **kwargs)
 		container = tk.Frame(self)
 
 		container.pack(side = "top", fill = "both", expand = True)
 
-		container.grid_rowconfigure(0,weight = 1)
+		container.grid_rowconfigure(0, weight = 1)
 		container.grid_columnconfigure(0, weight = 1)
 
 		self.frames = {}
@@ -45,7 +45,7 @@ class Application(tk.Tk):
 		self.show_frame(StartGamePage)
 
 
-	def show_frame(self,cont):
+	def show_frame(self, cont):
 		'''
 		Raises frame to top, displaying it as the current window
 		'''
@@ -63,8 +63,8 @@ class StartGamePage(tk.Frame):
 		tk.Frame.__init__(self,parent)
 		
 		# set label
-		label = tk.Label(self,text = "ESE 205: Computer Vision Chess", font = LARGE_FONT)
-		label.pack(pady = 20, padx = 20)
+		label = tk.Label(self,text = "ESE 205: Computer Vision Chess", bg = "green", fg = "white", font = LARGE_FONT)
+		label.pack(pady = 50, padx = 50)
 
 		# set button that takes you to InitializeBoardPage and calls Game.setUp()
 		startGameButton = tk.Button(self, text = "Start New Game",font = MED_FONT,
@@ -157,7 +157,7 @@ class PlayerMovePage(tk.Frame):
 		'''
 
 		if controller.game.over:
-			controller.winner.set(contoller.game.winner)
+			controller.winner.set(controller.game.winner)
 			controller.show_frame(GameOverPage)
 
 		elif controller.game.board.promo:
@@ -318,7 +318,8 @@ class ChooseDifficultyPage(tk.Frame):
 
 		MasterButton.pack()
 	def setEasy(self,controller):
-		controller.game.chessEngine.engine.setoption({'Skill Level' : 1})
+		# controller.game.chessEngine.engine.Limit(time=0.1)
+		pass
 
 	def setIntermediate(self,controller):
 		controller.game.chessEngine.engine.setoption({'Skill Level' : 5})

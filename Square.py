@@ -20,8 +20,7 @@ class Square:
 
 		# Center of square
 		M = cv2.moments(self.contour)
-		cx = int(M['m10'] / M['m00'])
-		cy = int(M['m01'] / M['m00'])
+		cx, cy = int(M['m10'] / M['m00']), int(M['m01'] / M['m00'])
 
 		# ROI for image differencing
 		self.roi = (cx, cy)

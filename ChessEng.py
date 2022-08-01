@@ -1,7 +1,8 @@
 import chess
-import chess.uci
+import chess.engine
+# import chess.uci
 import numpy as np
-import stockfish
+# import stockfish
 from Board import Board
 
 class ChessEng:
@@ -17,8 +18,8 @@ class ChessEng:
 		'''
 
 		self.engBoard = chess.Board()
-		self.engine = chess.uci.popen_engine("/usr/games/stockfish")
-		self.engine.uci()
+		self.engine = chess.engine.SimpleEngine.popen_uci("/usr/local/bin/stockfish")		#采用官网的引擎引入方法
+		
 		print(self.engBoard)
 
 	def updateMove(self, move):

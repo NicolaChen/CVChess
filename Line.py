@@ -1,4 +1,8 @@
 import numpy as np
+import math
+
+from pyparsing import originalTextFor
+from sklearn.preprocessing import OrdinalEncoder
 
 class Line:
 
@@ -39,4 +43,24 @@ class Line:
 
 		return x,y
 
+	def get_angle(self):
+		'''获得网格线与方向轴正向的夹角[-45 deg, 45 deg]'''
+		angle_r = math.atan2(self.dy, self.dx)
+		angle = angle_r/math.pi * 180
+		if self.orientation == 'horizontal':
+			if self.dx * self.dy > 0 and angle < 0:
+				angle += 180
+			elif self.dx * self.dy < 0 and angle > 0:
+				angle -= 180
+		elif self.orientation == 'vertical':
+			if self.dy > 0:
+				angle -= 90
+			else:
+				angle += 90
 
+		return angle
+
+	def get_pts(self):
+		pt1 = (self.x1, self.y1)
+		pt2 = (self.x2, self.y2)
+		return pt1, pt2
