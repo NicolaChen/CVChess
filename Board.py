@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import math
 
-debug = False
+debug = True
 
 
 class Board:
@@ -16,6 +16,7 @@ class Board:
 		self.promotion = 'q'
 		self.promo = False
 		self.move = "e2e4"
+		self.distThres = 50
 
 	def draw(self,image):
 		"""
@@ -45,33 +46,41 @@ class Board:
 		for square in self.squares:
 			self.boardMatrix.append(square.state)
 
-	def determineChanges(self,previous, current):
+	def determineChanges(self, previous, current):
 		'''
 		Determines the change in color values within squares from picture to picture
 		to infer piece movement
 		'''
 
 		copy = current.copy()
-		
+		AreaDiff = cv2.mean(cv2.cvtColor(current, cv2.COLOR_BGR2GRAY))[0] - cv2.mean(cv2.cvtColor(previous, cv2.COLOR_BGR2GRAY))[0]
 		largestSquare = 0
 		secondLargestSquare = 0
 		largestDist = 0
 		secondLargestDist = 0
 		stateChange = []
+		
+		if debug:
+			# check for differences in gray between the photos
+			cv2.imshow('diff', cv2.absdiff(cv2.cvtColor(current, cv2.COLOR_BGR2GRAY), cv2.cvtColor(previous, cv2.COLOR_BGR2GRAY)))
 
-		# check for differences in color between the photos
 		for sq in self.squares:
-			colorPrevious = sq.roiColor(previous)
-			colorCurrent = sq.roiColor(current)
+			#colorPrevious = sq.roiColor(previous)
+			#colorCurrent = sq.roiColor(current)
+
+			grayPrevious = sq.roiGray(previous)
+			grayCurrent = sq.roiGray(current)
 
 			# distance in bgr values
-			sum = 0
-			for i in range(0,3):
-				sum += (colorCurrent[i] - colorPrevious[i])**2
+			#sum = 0
+			#for i in range(0,3):
+			#	sum += (colorCurrent[i] - colorPrevious[i])**2
 
-			distance = math.sqrt(sum)
+			#distance = math.sqrt(sum)
+			#distance = abs(grayCurrent - grayPrevious)
+			distance = sq.roiDiff('color', previous, current)
 
-			if distance > 25:
+			if distance > self.distThres:
 				stateChange.append(sq)
 				
 			if distance > largestDist:
@@ -86,8 +95,8 @@ class Board:
 				secondLargestDist = distance
 				secondLargestSquare = sq
 
-
-		if  len(stateChange)  == 4:
+		#TODO add new detect for PAWN special: en passant
+		if  len(stateChange)  >= 4:
 			
 			# if four square have color change in a single move, castling took place
 			squareOne = stateChange[0]
@@ -127,7 +136,7 @@ class Board:
 								squareFour.draw(copy, (255,0,0), 2)
 								cv2.imshow("previous",previous)
 								cv2.imshow("identified",copy)
-								cv2.waitKey()
+								cv2.waitKey(0)
 								cv2.destroyAllWindows()
 							return self.move
 
@@ -145,7 +154,7 @@ class Board:
 								squareFour.draw(copy, (255,0,0), 2)
 								cv2.imshow("previous",previous)
 								cv2.imshow("identified",copy)
-								cv2.waitKey()
+								cv2.waitKey(0)
 								cv2.destroyAllWindows()
 							return self.move
 
@@ -163,7 +172,7 @@ class Board:
 								squareFour.draw(copy, (255,0,0), 2)
 								cv2.imshow("previous",previous)
 								cv2.imshow("identified",copy)
-								cv2.waitKey()
+								cv2.waitKey(0)
 								cv2.destroyAllWindows()
 							return self.move
 				
@@ -173,26 +182,31 @@ class Board:
 		squareTwo = secondLargestSquare
 
 		if debug:
-			squareOne.draw(copy, (255,0,0), 2)
-			squareTwo.draw(copy, (255,0,0), 2)
-			cv2.imshow("previous",previous)
-			cv2.imshow("identified",copy)
-			cv2.waitKey(0)
-			cv2.destroyAllWindows()
+			squareOne.draw(copy, (255,0,0), 1)
+			squareTwo.draw(copy, (255,0,0), 1)
+			cv2.imshow("previous", previous)
+			cv2.imshow("identified", copy)
+			#cv2.waitKey(0)
+			#cv2.destroyAllWindows()
 
 		# get colors for each square from each photo
-		oneCurr = squareOne.roiColor(current)
-		twoCurr = squareTwo.roiColor(current)
+		#oneCurr = squareOne.roiColor(current)
+		#twoCurr = squareTwo.roiColor(current)
+
+		oneCurr = squareOne.roiGray(current)
+		twoCurr = squareTwo.roiGray(current)
 
 		# calculate distance from empty square color value
-		sumCurr1 = 0
-		sumCurr2 = 0
-		for i in range(0,3):
-			sumCurr1 += (oneCurr[i] - squareOne.emptyColor[i])**2
-			sumCurr2 += (twoCurr[i] - squareTwo.emptyColor[i])**2
+		#sumCurr1 = 0
+		#sumCurr2 = 0
+		#for i in range(0,3):
+		#	sumCurr1 += (oneCurr[i] - squareOne.emptyColor[i])**2
+		#	sumCurr2 += (twoCurr[i] - squareTwo.emptyColor[i])**2
 
-		distCurr1 = math.sqrt(sumCurr1)
-		distCurr2 = math.sqrt(sumCurr2)
+		#distCurr1 = math.sqrt(sumCurr1)
+		#distCurr2 = math.sqrt(sumCurr2)
+		distCurr1 = abs(oneCurr - squareOne.emptyGray)
+		distCurr2 = abs(twoCurr - squareTwo.emptyGray)
 
 		if distCurr1 < distCurr2:
 			# square 1 is closer to empty color value thus empty
@@ -206,7 +220,11 @@ class Board:
 					self.promo = True
 
 			self.move = squareOne.position + squareTwo.position
-
+			if debug:
+				squareTwo.draw(copy, (0,255,0), 1)
+				cv2.imshow('move', copy)
+				cv2.waitKey(0)
+				cv2.destroyAllWindows()
 		else:
 			# square 2 is currently empty
 			squareOne.state = squareTwo.state
@@ -218,7 +236,11 @@ class Board:
 				if squareOne.position[1:2] == '8' and squareTwo.position[1:2] == '7':
 					self.promo = True
 
-					
 			self.move = squareTwo.position + squareOne.position
+			if debug:
+				squareOne.draw(copy, (0,255,0), 1)
+				cv2.imshow('move', copy)
+				cv2.waitKey(0)
+				cv2.destroyAllWindows()
 
 		return self.move

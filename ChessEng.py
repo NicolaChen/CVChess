@@ -18,8 +18,8 @@ class ChessEng:
 		'''
 
 		self.engBoard = chess.Board()
-		self.engine = chess.engine.SimpleEngine.popen_uci("/usr/local/bin/stockfish")		#采用官网的引擎引入方法
-		
+		self.engine = chess.engine.SimpleEngine.popen_uci("/home/orangepi/Downloads/stockfish_15_linux_x64/stockfish_15_src/src/stockfish")		#采用官网的引擎引入方法
+		self.time = 0.1
 		print(self.engBoard)
 
 	def updateMove(self, move):
@@ -46,11 +46,8 @@ class ChessEng:
 		'''
 
 		# giving the CPU the current board position
-		self.engine.position(self.engBoard)
-		
-		# Giving the engine 2000ms to produce a move 
-		response = self.engine.go(movetime=2000)
-		bestMove = response[0]
+		result = self.engine.play(self.engBoard, chess.engine.Limit(time=self.time))
+		bestMove = result.move
 		
 		# update board
 		self.engBoard.push(bestMove)
@@ -62,5 +59,3 @@ class ChessEng:
 		
 		print(self.engBoard)
 		return bestMove
-
-

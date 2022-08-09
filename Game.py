@@ -1,4 +1,4 @@
-import imutils
+#import imutils
 import cv2
 import argparse
 import chess
@@ -34,6 +34,8 @@ class Game:
 		self.previous = 0
 		self.CPULastMove = "0"
 
+	def caliCam(self):
+		self.camera.cali()
 
 	def analyzeBoard(self):
 		'''
@@ -46,16 +48,15 @@ class Game:
 	def checkBoardIsSet(self):
 		'''
 		Takes inital picture of set board
-		'''	
-		self.current = self.camera.takePicture()
-
+		'''
+		self.camRet, self.current = self.camera.takePicture()
 
 	def playerMove(self):
 		'''
 		Compares previous Board to current board to determine the movement made by the player
 		'''
 		self.previous = self.current
-		self.current = self.camera.takePicture()
+		self.camRet, self.current = self.camera.takePicture()
 		move = self.board.determineChanges(self.previous,self.current)
 		code = self.chessEngine.updateMove(move)
 		if code == 1:
@@ -121,7 +122,9 @@ class Game:
 		Ensures player has moved the CPU piece properly
 		'''
 		self.previous = self.current
-		self.current = self.camera.takePicture()
+		self.camRet = False
+		while self.camRet == False:
+			self.camRet, self.current = self.camera.takePicture()
 
 		# determine move
 		move = self.board.determineChanges(self.previous, self.current)
@@ -133,3 +136,13 @@ class Game:
 		else:
 			# GUI will open CPUMoveError Page
 			self.CPUMoveError = True
+
+	def updatePrevious(self):
+		'''
+		Update previous frame in case identify errors caused by unexpected moves
+		'''
+		self.camRet = False
+		while self.camRet == False:
+			self.camRet, frame = self.camera.takePicture()
+		print("Update Previous Frame Success.")
+		self.current = frame

@@ -3,12 +3,12 @@ from sys import addaudithook
 import cv2
 from cv2 import adaptiveThreshold
 import numpy as np
-import imutils
+#import imutils
 from Line import Line
 from Square import Square
 from Board import Board
 
-debug =  False
+debug =  True
 
 
 class board_Recognition:
@@ -19,14 +19,14 @@ class board_Recognition:
 
 	def __init__(self, camera):
 		self.cam = camera
+		self.sqscale = 50
 
 	def initialize_Board(self):
 		corners = []
 
 		# retake picture until board is initialized properly
 		while len(corners) < 121:
-
-			image = self.cam.takePicture()
+			ret, image = self.cam.takePicture()
 
 			# Binarize the photo
 			adaptiveThresh = self.clean_Image(image)
@@ -38,7 +38,8 @@ class board_Recognition:
 			edges, colorEdges = self.findEdges(mask)
 
 			# 旋转线框图像至正位
-			rot_edges, rot_color_edges = self.rotateImg(edges)
+			# rot_edges, rot_color_edges = self.rotateImg(edges)
+			rot_edges, rot_color_edges = edges, colorEdges
 
 			# Find lines
 			horizontal, vertical = self.findLines(rot_edges, rot_color_edges)
@@ -59,7 +60,7 @@ class board_Recognition:
 		Resizes and converts the photo to black and white for simpler analysis
 		'''
 		# resize image
-		# img = imutils.resize(image, width=400, height = 400)
+		# img = imutils.resize(image, width = 400, height = 400)
 		
 		# Convert to grayscale
 		gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -68,7 +69,7 @@ class board_Recognition:
 		# Adaptive thresholding is used to combat differences of illumination in the picture
 		# adaptiveThresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 125, 1)
 		# 改进：采用模糊后OTSU获得阈值，结合实际实验参数，调整实际阈值
-		blur = cv2.GaussianBlur(gray, (33, 33), 0)
+		blur = cv2.GaussianBlur(gray, (17, 17), 0)
 		ret1, th1 = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 		ret2, th2 = cv2.threshold(blur, ret1-20, 255, cv2.THRESH_BINARY)
 		adaptiveThresh = th2
@@ -105,16 +106,16 @@ class board_Recognition:
 			# Filtering the chessboard edge / Error handling as some contours are so small so as to give zero division
 			#For test values are 70-40, for Board values are 80 - 75 - will need to recalibrate if change
 			#the largest square is always the largest ratio
-			if perimeter > 1800 and perimeter < 8000:
-				ratio = area / perimeter
-				if ratio > Lratio:
-					MaxCtr = contours[c]
-					Lratio = ratio
-					Lperimeter = perimeter
-					Larea = area
-			else:
-				pass
-
+			#if perimeter > 500 and perimeter < 8000:
+			ratio = area / perimeter
+			if ratio > Lratio:
+				MaxCtr = contours[c]
+				Lratio = ratio
+				Lperimeter = perimeter
+				Larea = area
+			#else:
+				#pass
+		self.sqscale = int(np.sqrt(Larea)/9)
 		# Draw contours
 		cv2.drawContours(imgContours, [MaxCtr], -1, (0,0,0), 1)
 		if debug:
@@ -152,7 +153,7 @@ class board_Recognition:
 		'''
 	
 		# Find edges
-		edges = cv2.Canny(image, 100, 200, None, 3)
+		edges = cv2.Canny(image, 60, 100, None, 3)
 		if debug:
 			#Show image with edges drawn
 			cv2.imshow("Canny", edges)
@@ -168,7 +169,7 @@ class board_Recognition:
 		'''
 		Rotate the image according to edges found before, return rotated GRAY & BGR image
 		'''
-		lines = cv2.HoughLinesP(edges, 1,  np.pi / 180, 100,np.array([]), 100, 80)
+		lines = cv2.HoughLinesP(edges, 1,  np.pi / 180, 100,np.array([]), self.sqscale*2, self.sqscale*3)
 		a,b,c = lines.shape
 		angles = []
 		for l in range(a):
@@ -191,7 +192,7 @@ class board_Recognition:
 		'''
 		
 		# Infer lines based on edges
-		lines = cv2.HoughLinesP(edges, 1,  np.pi / 180, 100,np.array([]), 100, 80)
+		lines = cv2.HoughLinesP(edges, 1,  np.pi / 180, 100,np.array([]), self.sqscale*2, self.sqscale*3)
 
 		# Draw lines
 		a,b,c = lines.shape
@@ -234,7 +235,7 @@ class board_Recognition:
 		for c in corners:
 			matchingFlag = False
 			for d in dedupeCorners:
-				if math.sqrt((d[0]-c[0])*(d[0]-c[0]) + (d[1]-c[1])*(d[1]-c[1])) < 20:
+				if math.sqrt((d[0]-c[0])*(d[0]-c[0]) + (d[1]-c[1])*(d[1]-c[1])) < self.sqscale*0.3:
 					matchingFlag = True
 					break
 			if not matchingFlag:
@@ -285,7 +286,7 @@ class board_Recognition:
 				c4 = rows[r+1 + 1][c+1 + 1]
 
 				position = letters[r] + numbers[7-c]
-				newSquare = Square(colorEdges,c1,c2,c3,c4,position)
+				newSquare = Square(colorEdges, c1, c2, c3, c4, position, self.sqscale)
 				newSquare.draw(colorEdges,(0,0,255),2)
 				newSquare.drawROI(colorEdges,(255,0,0),2)
 				newSquare.classify(colorEdges)

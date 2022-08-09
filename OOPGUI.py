@@ -80,8 +80,9 @@ class InitializeBoardPage(tk.Frame):
 	def __init__(self,parent,controller):
 
 		tk.Frame.__init__(self,parent)
-		label = tk.Label(self,text = "Clear Board for Game Set Up", font = LARGE_FONT)
+		label = tk.Label(self,text = "Calibrate Camera.\nClear Board for Game Set Up", font = LARGE_FONT)
 		label.pack(pady = 10, padx = 10)
+		caliCamButton = tk.Button(self, text = "Calibrate", font = MED_FONT, command = lambda : [controller.game.caliCam()]).pack()
 		initBoardButton = tk.Button(self, text = "Done",font = MED_FONT, command = lambda : [controller.show_frame(SetBoardPage), controller.game.analyzeBoard()])
 		initBoardButton.pack()
 
@@ -146,7 +147,7 @@ class PlayerMovePage(tk.Frame):
 
 		# set button that ends game. Shows game over page with CPU as winner
 		ResignButton = tk.Button(self, text = "Resign",font = SMALL_FONT,
-						command = lambda : controller.show_frame(GameOverPage))
+						command = lambda : controller.show_frame(ConfirmPage))
 		PlayerButton.pack()
 		ResignButton.pack()
 
@@ -170,6 +171,20 @@ class PlayerMovePage(tk.Frame):
 		else:
 			controller.move.set(controller.game.CPUMove())
 			controller.show_frame(CPUMovePage)
+
+class Confirmpage(tk.Frame):
+	def __init__(self,parent,controller):
+
+		tk.Frame.__init__(self,parent)
+
+		# set label
+		label = tk.Label(self,text = "Are you sure to resign?", font = LARGE_FONT)
+		label.pack(pady = 10, padx = 10)
+		
+		YesButton = tk.Button(self, text = "Yes",font = MED_FONT,
+						command = lambda : controller.show_frame(GameOverPage)).pack()
+		NoButton = tk.Button(self, text = "No, continue",font = MED_FONT,
+						command = lambda : controller.show_frame(PlayerMovePage)).pack()
 
 class CPUMovePage(tk.Frame):
 	'''
@@ -247,6 +262,7 @@ class CPUMoveErrorPage(tk.Frame):
 		setBoardButton = tk.Button(self, text = "Try Again",font = MED_FONT,
 						command = lambda : controller.show_frame(CPUMovePage))
 		setBoardButton.pack()
+		updateFrameButton = tk.Button(self, text = "Update Previous Frame", font = MED_FONT, command = lambda : [controller.game.updatePrevious(), controller.show_frame(CPUMovePage)]).pack()
 
 
 class PlayerMoveErrorPage(tk.Frame):
@@ -266,6 +282,7 @@ class PlayerMoveErrorPage(tk.Frame):
 		setBoardButton = tk.Button(self, text = "Try Again", font = MED_FONT,
 						command = lambda : controller.show_frame(PlayerMovePage))
 		setBoardButton.pack()
+
 
 class GameOverPage(tk.Frame):
 	'''
@@ -318,20 +335,20 @@ class ChooseDifficultyPage(tk.Frame):
 
 		MasterButton.pack()
 	def setEasy(self,controller):
-		# controller.game.chessEngine.engine.Limit(time=0.1)
-		pass
+		controller.game.chessEngine.time=0.01
+		controller.game.chessEngine.engine.configure({"Skill Level":0})
 
 	def setIntermediate(self,controller):
-		controller.game.chessEngine.engine.setoption({'Skill Level' : 5})
+		controller.game.chessEngine.time=0.1
 
 	def setHard(self,controller):
-		controller.game.chessEngine.engine.setoption({'Skill Level' : 10})
+		controller.game.chessEngine.time=1
 
 	def setExtreme(self,controller):
-		controller.game.chessEngine.engine.setoption({'Skill Level' : 15})
+		controller.game.chessEngine.time=5
 
 	def setMaster(self,controller):
-		controller.game.chessEngine.engine.setoption({'Skill Level' : 20})
+		controller.game.chessEngine.time=10
 		
 		
 		
@@ -433,7 +450,7 @@ class ChoosePromotionPage(tk.Frame):
 			controller.show_frame(CPUMovePage)
 	
 
-
+# multiprocessing for cam reading?
 
 app = Application()
 app.mainloop()
