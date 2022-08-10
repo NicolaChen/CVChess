@@ -8,6 +8,7 @@ from Board import Board
 from Camera import Camera
 import threading
 from datetime import datetime
+import time
 
 class Game:
 	'''
@@ -61,9 +62,10 @@ class Game:
 		Takes inital picture of set board
 		'''
 		#camRet, self.current = self.camera.takePicture()
+		time.sleep(5)
 		while True:
 			self.current = self.camera.getFrame()
-			if cv2.Laplacian(self.current, cv2.CV_64F).var() > 4E8/(self.current.shape[1] * self.current.shape[0]):
+			if cv2.Laplacian(self.current, cv2.CV_64F).var() > 3E8/(self.current.shape[1] * self.current.shape[0]):
 				break
 
 	def playerMove(self):
@@ -72,9 +74,9 @@ class Game:
 		'''
 		self.previous = self.current
 		#camRet, self.current = self.camera.takePicture()
-		while True:
+		for i in range(30):
 			self.current = self.camera.getFrame()
-			if cv2.Laplacian(self.current, cv2.CV_64F).var() > 4E8/(self.current.shape[1] * self.current.shape[0]):
+			if abs(cv2.mean(self.current)[0]+cv2.mean(self.current)[1]+cv2.mean(self.current)[2] - cv2.mean(self.previous)[0]-cv2.mean(self.previous)[1]-cv2.mean(self.previous)[2]) < 15 and cv2.Laplacian(self.current, cv2.CV_64F).var() > 3E8/(self.current.shape[1] * self.current.shape[0]):
 				break
 		move = self.board.determineChanges(self.previous,self.current)
 		code = self.chessEngine.updateMove(move)
@@ -144,9 +146,9 @@ class Game:
 		#self.camRet = False
 		#while self.camRet == False:
 		#	self.camRet, self.current = self.camera.takePicture()
-		while True:
+		for i in range(30):
 			self.current = self.camera.getFrame()
-			if cv2.Laplacian(self.current, cv2.CV_64F).var() > 4E8/(self.current.shape[1] * self.current.shape[0]):
+			if abs(cv2.mean(self.current)[0]+cv2.mean(self.current)[1]+cv2.mean(self.current)[2] - cv2.mean(self.previous)[0]-cv2.mean(self.previous)[1]-cv2.mean(self.previous)[2]) < 15 and cv2.Laplacian(self.current, cv2.CV_64F).var() > 3E8/(self.current.shape[1] * self.current.shape[0]):
 				break
 
 		# determine move
@@ -169,7 +171,7 @@ class Game:
 		#	self.camRet, frame = self.camera.takePicture()
 		while True:
 			frame = self.camera.getFrame()
-			if cv2.Laplacian(frame, cv2.CV_64F).var() > 4E8/(frame.shape[1] * frame.shape[0]):
+			if cv2.Laplacian(frame, cv2.CV_64F).var() > 3E8/(frame.shape[1] * frame.shape[0]):
 				break
 
 		print("Update Previous Frame Success.")

@@ -53,7 +53,7 @@ class Board:
 		'''
 
 		copy = current.copy()
-		AreaDiff = cv2.mean(cv2.cvtColor(current, cv2.COLOR_BGR2GRAY))[0] - cv2.mean(cv2.cvtColor(previous, cv2.COLOR_BGR2GRAY))[0]
+
 		largestSquare = 0
 		secondLargestSquare = 0
 		largestDist = 0

@@ -16,15 +16,15 @@ class Camera:
 		if not self.cam.isOpened():
 			print("Cam Open Fail. Try Again!")
 		while self.cam.isOpened():
-			ret, frame = self.cam.read()
-			scale = 0.5
-			SIZE = (int(scale * frame.shape[1]), int(scale * frame.shape[0]))
-			frame = cv2.resize(frame, SIZE)
+			self.lock.acquire()
+			frame = self.frame
+			self.lock.release()
 			cv2.putText(frame, str(cv2.Laplacian(frame, cv2.CV_64F).var()), (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0))
+			cv2.putText(frame, 'w: '+str(frame.shape[1])+', h: '+str(frame.shape[0])+"var: "+str(3E8/(frame.shape[1] * frame.shape[0])), (100,200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0))
+			cv2.putText(frame, str(cv2.mean(frame)[0]+cv2.mean(frame)[1]+cv2.mean(frame)[2]), (100,300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0))
 			cv2.imshow("calibration", frame)
-			if cv2.waitKey(100) == 27 or cv2.Laplacian(frame, cv2.CV_64F).var() > 4E8/(frame.shape[1] * frame.shape[0]):
+			if cv2.waitKey(100) == 27:
 				cv2.destroyWindow("calibration")
-				self.cam.release()
 				break
 	'''
 	def takePicture(self):
@@ -61,7 +61,7 @@ class Camera:
 			SIZE = (int(scale * frame.shape[1]), int(scale * frame.shape[0]))
 			self.frame = cv2.resize(frame, SIZE)
 			self.lock.release()
-			time.sleep(0.5)
+			time.sleep(0.1)
 
 	def getFrame(self):
 		'''
