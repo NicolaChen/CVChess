@@ -2,11 +2,14 @@
 import time
 import cv2
 # import imutils
+import threading
 
 class Camera:
 
 	def __init__(self):
 		self.cam = cv2.VideoCapture(0)
+		self.frame = None
+		self.lock = threading.Lock()
 
 	def cali(self):
 		print("Calibration begins. Exit by press key 'Esc'.")
@@ -17,13 +20,13 @@ class Camera:
 			scale = 0.5
 			SIZE = (int(scale * frame.shape[1]), int(scale * frame.shape[0]))
 			frame = cv2.resize(frame, SIZE)
-			cv2.putText(frame, str(cv2.Laplacian(frame, cv2.CV_32F).var()), (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0))
+			cv2.putText(frame, str(cv2.Laplacian(frame, cv2.CV_64F).var()), (100,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0))
 			cv2.imshow("calibration", frame)
 			if cv2.waitKey(100) == 27 or cv2.Laplacian(frame, cv2.CV_64F).var() > 4E8/(frame.shape[1] * frame.shape[0]):
 				cv2.destroyWindow("calibration")
 				self.cam.release()
 				break
-
+	'''
 	def takePicture(self):
 		# allow the camera to warmup
 		# time.sleep(1)
@@ -45,3 +48,26 @@ class Camera:
 
 		self.cam.release()
 		return ret, frame
+	'''
+
+	def run(self):
+		'''
+		Adjust for multithreading
+		'''
+		while True:
+			self.lock.acquire()
+			ret, frame = self.cam.read()
+			scale = 0.5
+			SIZE = (int(scale * frame.shape[1]), int(scale * frame.shape[0]))
+			self.frame = cv2.resize(frame, SIZE)
+			self.lock.release()
+			time.sleep(0.5)
+
+	def getFrame(self):
+		'''
+		Adjust for multithreading
+		'''
+		self.lock.acquire()
+		frame = self.frame
+		self.lock.release()
+		return frame

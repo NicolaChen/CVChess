@@ -6,6 +6,8 @@ from ChessEng import ChessEng
 from board_Recognition import board_Recognition
 from Board import Board
 from Camera import Camera
+import threading
+from datetime import datetime
 
 class Game:
 	'''
@@ -22,17 +24,26 @@ class Game:
 		self.PlayerMoveError = False
 		self.isCheck = False
 		self.winner = "No one"
+		self.camera = Camera()
+		camthread = threading.Thread(target = self.camera.run)
+		camthread.setDaemon(True)
+		camthread.start()
 
 	def setUp(self):
 		'''
 		Initializes objects with which the Game will interact
 		'''	
-		self.camera = Camera()
+		
 		self.chessEngine = ChessEng()
 		self.board = 0
 		self.current = 0
 		self.previous = 0
 		self.CPULastMove = "0"
+
+		# write record to txt file
+		f = open("Game.txt", "a+")
+		f.write("New Game, time: " + str(datetime.now()) + "\r\n")
+		f.close()
 
 	def caliCam(self):
 		self.camera.cali()
@@ -49,14 +60,22 @@ class Game:
 		'''
 		Takes inital picture of set board
 		'''
-		self.camRet, self.current = self.camera.takePicture()
+		#camRet, self.current = self.camera.takePicture()
+		while True:
+			self.current = self.camera.getFrame()
+			if cv2.Laplacian(self.current, cv2.CV_64F).var() > 4E8/(self.current.shape[1] * self.current.shape[0]):
+				break
 
 	def playerMove(self):
 		'''
 		Compares previous Board to current board to determine the movement made by the player
 		'''
 		self.previous = self.current
-		self.camRet, self.current = self.camera.takePicture()
+		#camRet, self.current = self.camera.takePicture()
+		while True:
+			self.current = self.camera.getFrame()
+			if cv2.Laplacian(self.current, cv2.CV_64F).var() > 4E8/(self.current.shape[1] * self.current.shape[0]):
+				break
 		move = self.board.determineChanges(self.previous,self.current)
 		code = self.chessEngine.updateMove(move)
 		if code == 1:
@@ -122,9 +141,13 @@ class Game:
 		Ensures player has moved the CPU piece properly
 		'''
 		self.previous = self.current
-		self.camRet = False
-		while self.camRet == False:
-			self.camRet, self.current = self.camera.takePicture()
+		#self.camRet = False
+		#while self.camRet == False:
+		#	self.camRet, self.current = self.camera.takePicture()
+		while True:
+			self.current = self.camera.getFrame()
+			if cv2.Laplacian(self.current, cv2.CV_64F).var() > 4E8/(self.current.shape[1] * self.current.shape[0]):
+				break
 
 		# determine move
 		move = self.board.determineChanges(self.previous, self.current)
@@ -141,8 +164,13 @@ class Game:
 		'''
 		Update previous frame in case identify errors caused by unexpected moves
 		'''
-		self.camRet = False
-		while self.camRet == False:
-			self.camRet, frame = self.camera.takePicture()
+		#self.camRet = False
+		#while self.camRet == False:
+		#	self.camRet, frame = self.camera.takePicture()
+		while True:
+			frame = self.camera.getFrame()
+			if cv2.Laplacian(frame, cv2.CV_64F).var() > 4E8/(frame.shape[1] * frame.shape[0]):
+				break
+
 		print("Update Previous Frame Success.")
 		self.current = frame

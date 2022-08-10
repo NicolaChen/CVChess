@@ -26,8 +26,12 @@ class board_Recognition:
 
 		# retake picture until board is initialized properly
 		while len(corners) < 121:
-			ret, image = self.cam.takePicture()
-
+			#ret, image = self.cam.takePicture()
+			while True:
+				image = self.cam.getFrame()
+				if cv2.Laplacian(image, cv2.CV_64F).var() > 4E8/(image.shape[1] * image.shape[0]):
+					break	
+	
 			# Binarize the photo
 			adaptiveThresh = self.clean_Image(image)
 

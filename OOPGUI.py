@@ -1,13 +1,14 @@
 import tkinter as tk
 from tkinter import *
 from Game import Game
+import threading
 
 # set font sizes
 LARGE_FONT = ("system", 20)
 MED_FONT = ("system", 12)
 SMALL_FONT = ("system", 8)
 
-
+lock = threading.Lock()
 class Application(tk.Tk):
 	'''
 	This class controls the Graphical User Interface
@@ -36,7 +37,7 @@ class Application(tk.Tk):
 		# Give page objects to Application to show frame
 		for F in (StartGamePage, InitializeBoardPage,SetBoardPage, ChooseColorPage,
 				ChooseDifficultyPage, CPUMovePage, PlayerMovePage, CheckPage,
-				CPUMoveErrorPage, GameOverPage, PlayerMoveErrorPage, ChoosePromotionPage):
+				CPUMoveErrorPage, ConfirmPage, GameOverPage, PlayerMoveErrorPage, ChoosePromotionPage):
 
 			frame = F(container, self)
 			self.frames[F] = frame
@@ -52,6 +53,7 @@ class Application(tk.Tk):
 
 		frame = self.frames[cont]
 		frame.tkraise()
+
 
 class StartGamePage(tk.Frame):
 	'''
@@ -172,7 +174,7 @@ class PlayerMovePage(tk.Frame):
 			controller.move.set(controller.game.CPUMove())
 			controller.show_frame(CPUMovePage)
 
-class Confirmpage(tk.Frame):
+class ConfirmPage(tk.Frame):
 	def __init__(self,parent,controller):
 
 		tk.Frame.__init__(self,parent)
@@ -282,6 +284,7 @@ class PlayerMoveErrorPage(tk.Frame):
 		setBoardButton = tk.Button(self, text = "Try Again", font = MED_FONT,
 						command = lambda : controller.show_frame(PlayerMovePage))
 		setBoardButton.pack()
+		updateFrameButton = tk.Button(self, text = "Update Previous Frame", font = MED_FONT, command = lambda : [controller.game.updatePrevious(), controller.show_frame(PlayerMovePage)]).pack()
 
 
 class GameOverPage(tk.Frame):
@@ -300,6 +303,7 @@ class GameOverPage(tk.Frame):
 		self.winnerLabel = tk.Label(self, textvariable = controller.winner, font = LARGE_FONT)
 		label.pack(pady = 10, padx = 10)
 		self.winnerLabel.pack(pady = 10, padx = 10)
+		quitButton = tk.Button(self, text = "Quit", font = MED_FONT, command = lambda : controller.destroy()).pack()		# TODO figure out how to quit efficiently
 
 class ChooseDifficultyPage(tk.Frame):
 	'''
@@ -450,7 +454,6 @@ class ChoosePromotionPage(tk.Frame):
 			controller.show_frame(CPUMovePage)
 	
 
-# multiprocessing for cam reading?
 
 app = Application()
 app.mainloop()

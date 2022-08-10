@@ -13,7 +13,6 @@ class Proc:
 	def __init__(self):
 		self.cam = cv2.VideoCapture(0)
 		self.frame = None
-		self.th = None
 
 	def cap(self):
 		while True:

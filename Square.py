@@ -47,7 +47,7 @@ class Square:
 		# Draw the ROI circle on the mask
 		cv2.circle(maskImage, self.roi, self.radius, (255, 255, 255), -1)
 		# Find the average color
-		average_raw = cv2.mean(image, mask=maskImage)[::-1]
+		average_raw = cv2.mean(image, mask=maskImage)
 		# Need int format so reassign variable
 		average = (int(average_raw[0]), int(average_raw[1]), int(average_raw[2]))
 

@@ -190,23 +190,22 @@ class Board:
 			#cv2.destroyAllWindows()
 
 		# get colors for each square from each photo
-		#oneCurr = squareOne.roiColor(current)
-		#twoCurr = squareTwo.roiColor(current)
-
-		oneCurr = squareOne.roiGray(current)
-		twoCurr = squareTwo.roiGray(current)
-
+		oneCurr = squareOne.roiColor(current)
+		twoCurr = squareTwo.roiColor(current)
 		# calculate distance from empty square color value
-		#sumCurr1 = 0
-		#sumCurr2 = 0
-		#for i in range(0,3):
-		#	sumCurr1 += (oneCurr[i] - squareOne.emptyColor[i])**2
-		#	sumCurr2 += (twoCurr[i] - squareTwo.emptyColor[i])**2
+		sumCurr1 = 0
+		sumCurr2 = 0
+		for i in range(0,3):
+			sumCurr1 += (oneCurr[i] - squareOne.emptyColor[i])**2
+			sumCurr2 += (twoCurr[i] - squareTwo.emptyColor[i])**2
+		distCurr1 = math.sqrt(sumCurr1)
+		distCurr2 = math.sqrt(sumCurr2)
 
-		#distCurr1 = math.sqrt(sumCurr1)
-		#distCurr2 = math.sqrt(sumCurr2)
-		distCurr1 = abs(oneCurr - squareOne.emptyGray)
-		distCurr2 = abs(twoCurr - squareTwo.emptyGray)
+
+		#oneCurr = squareOne.roiGray(current)
+		#twoCurr = squareTwo.roiGray(current)
+		#distCurr1 = abs(oneCurr - squareOne.emptyGray)
+		#distCurr2 = abs(twoCurr - squareTwo.emptyGray)
 
 		if distCurr1 < distCurr2:
 			# square 1 is closer to empty color value thus empty
@@ -218,7 +217,6 @@ class Board:
 					self.promo = True
 				if squareOne.position[1:2] == '7' and squareTwo.position[1:2] == '8':
 					self.promo = True
-
 			self.move = squareOne.position + squareTwo.position
 			if debug:
 				squareTwo.draw(copy, (0,255,0), 1)
@@ -235,7 +233,6 @@ class Board:
 					self.promo = True
 				if squareOne.position[1:2] == '8' and squareTwo.position[1:2] == '7':
 					self.promo = True
-
 			self.move = squareTwo.position + squareOne.position
 			if debug:
 				squareOne.draw(copy, (0,255,0), 1)
