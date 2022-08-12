@@ -17,7 +17,7 @@ class Board:
 		self.promotion = 'q'
 		self.promo = False
 		self.move = "e2e4"
-		self.distThres = 50
+		self.distThresh = 50
 
 	def draw(self, image):
 		"""
@@ -82,7 +82,7 @@ class Board:
 			# distance = abs(grayCurrent - grayPrevious)
 			distance = sq.roiDiff('color', previous, current)
 
-			if distance > self.distThres:
+			if distance > self.distThresh:
 				stateChange.append(sq)
 
 			if distance > largestDist:

@@ -52,6 +52,7 @@ class StartGamePage(tk.Frame):
         start_button = tk.Button(self, text="Start Chess Game", font=MED_FONT,
                                  command=lambda: [controller.showFrame(InitializePage), controller.game.setUp()])
         start_button.pack(pady=30)
+        # TODO: Add arm gesture initialize code
 
 
 class InitializePage(tk.Frame):
@@ -163,7 +164,7 @@ class PlayerMovePage(tk.Frame):
 
     def waitPlayerMove(self, controller):
         """
-        DO: detect player's move and show in label, then check the game
+        Detect player's move and show in label, then check the game
         """
         # TODO: Combine detect&move, new function generates Game.playerMove
         controller.game.detectPlayerMove()
@@ -179,7 +180,7 @@ class PlayerMovePage(tk.Frame):
     @staticmethod
     def checkValid_P(controller):
         """
-        DO: check whether game is over/promotion/player error, if not, engine moves; contain Frame change
+        Check whether game is over/promotion/player error, if not, engine moves; contain Frame change
         """
         if controller.game.over:
             controller.winner.set(controller.game.winner)
@@ -207,7 +208,7 @@ class EngineMovePage(tk.Frame):
 
         # TODO: Add Servo move control codes
         controller.game.updateCurrent()
-        controller.game.checkEngineMove()  # involving Game.boardMatchError
+        controller.game.checkEngineMove()  # Involving Game.boardMatchError
 
         self.checkValid_E(controller)
 
@@ -264,18 +265,18 @@ class ChoosePromotionPage(tk.Frame):
         choose_label = tk.Label(self, text="Choose your promotion", font=LARGE_FONT)
         choose_label.pack(pady=10, padx=10)
 
-        QueenButton = tk.Button(self, text="Queen(Q)",
-                                command=lambda: [self.setQueen(controller)])
-        RookButton = tk.Button(self, text="Rook(R)",
-                               command=lambda: [self.setRook(controller)])
-        BishopButton = tk.Button(self, text="Bishop(B)",
-                                 command=lambda: [self.setBishop(controller)])
-        KnightButton = tk.Button(self, text="Knight(N)",
-                                 command=lambda: [self.setKnight(controller)])
-        QueenButton.pack()
-        RookButton.pack()
-        BishopButton.pack()
-        KnightButton.pack()
+        queen_button = tk.Button(self, text="Queen(Q)",
+                                 command=lambda: [self.setQueen(controller)])
+        rook_button = tk.Button(self, text="Rook(R)",
+                                command=lambda: [self.setRook(controller)])
+        bishop_button = tk.Button(self, text="Bishop(B)",
+                                  command=lambda: [self.setBishop(controller)])
+        knight_button = tk.Button(self, text="Knight(N)",
+                                  command=lambda: [self.setKnight(controller)])
+        queen_button.pack()
+        rook_button.pack()
+        bishop_button.pack()
+        knight_button.pack()
 
     @staticmethod
     def setQueen(controller):

@@ -11,80 +11,77 @@ debug = True
 
 
 class BoardRecognition:
-	'''
-	This class handles the initialization of the board. It analyzes
-	the empty board finding its border, lines, corners, squares...
-	'''
 
 	def __init__(self, camera):
 		self.cam = camera
-		self.sqscale = 50
+		self.square_scale = 50
+		self.image = None
 
 	def initializeBoard(self):
 		corners = []
 		while len(corners) < 121:
 			while True:
-				image = self.cam.getFrame()
-				if cv2.Laplacian(image, cv2.CV_64F).var() > 3E8 / (image.shape[1] * image.shape[0]):
+				self.image = self.cam.getFrame()
+				if cv2.Laplacian(self.image, cv2.CV_64F).var() > 3E8 / (self.image.shape[1] * self.image.shape[0]):
 					break
 
-			adaptiveThresh = self.cleanImage(image)
-			mask = self.initializeMask(adaptiveThresh, image)
-			edges, colorEdges = self.findEdges(mask)
+			thresh_image = self.cleanImage()
+			mask_image = self.initializeMask(thresh_image)
+			edges, color_edges = self.findEdges(mask_image)
 			# 旋转线框图像至正位
 			# rot_edges, rot_color_edges = self.rotateImg(edges)
-			rot_edges, rot_color_edges = edges, colorEdges  # 暂不旋转
+			rot_edges, rot_color_edges = edges, color_edges  # 暂不旋转
 			horizontal, vertical = self.findLines(rot_edges, rot_color_edges)
 			corners = self.findCorners(horizontal, vertical, rot_color_edges)
-		squares = self.findSquares(corners, image)
+		squares = self.findSquares(corners, self.image)
 		board = Board(squares)
 		return board
 
-	def cleanImage(self, image):
-		gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+	def cleanImage(self):
+		gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
 		blur = cv2.GaussianBlur(gray, (17, 17), 0)
 		ret1, th1 = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 		ret2, th2 = cv2.threshold(blur, ret1 - 20, 255, cv2.THRESH_BINARY)
-		adaptiveThresh = th2
+		auto_thresh = th2
 
 		if debug:
-			# Show thresholded image
-			cv2.imshow("Adaptive Thresholding", adaptiveThresh)
+			cv2.imshow("Auto Thresholding", auto_thresh)
 			cv2.waitKey(0)
 			cv2.destroyAllWindows()
 
-		return adaptiveThresh
+		return auto_thresh
 
-	def initializeMask(self, adaptiveThresh, img):
-		contours, hierarchy = cv2.findContours(adaptiveThresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-		imgContours = img.copy()
+	def initializeMask(self, thresh_image):
+		contours, hierarchy = cv2.findContours(thresh_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		image_contours = self.image.copy()
 
-		Lratio = 0
-		MaxCtr = None
+		max_ratio = 0
+		max_contour = None
+		max_area = 0
 		for c in range(len(contours)):
 			area = cv2.contourArea(contours[c])
 			perimeter = cv2.arcLength(contours[c], True)
 			ratio = area / perimeter
-			if ratio > Lratio:
-				MaxCtr = contours[c]
-				Lratio = ratio
-				Lperimeter = perimeter
-				Larea = area
-		self.sqscale = int(np.sqrt(Larea) / 9)
-		cv2.drawContours(imgContours, [MaxCtr], -1, (0, 0, 0), 1)
+			if ratio > max_ratio:
+				max_contour = contours[c]
+				max_ratio = ratio
+				# max_perimeter = perimeter
+				max_area = area
+		self.square_scale = int(np.sqrt(max_area) / 9)
+		cv2.drawContours(image_contours, [max_contour], -1, (0, 0, 0), 1)
 
 		if debug:
 			# Show image with contours drawn
-			cv2.imshow("Chess Boarder", imgContours)
+			cv2.imshow("Chess Boarder", image_contours)
 			cv2.waitKey(0)
 			cv2.destroyAllWindows()
 
-		chessboardEdge = cv2.convexHull(MaxCtr)  # 改用更好的凸包
+		chessboardEdge = cv2.convexHull(max_contour)  # 改用更好的凸包
 
-		mask = np.zeros((img.shape[0], img.shape[1]), 'uint8')
+		mask = np.zeros((self.image.shape[0], self.image.shape[1]), 'uint8')
 		cv2.fillConvexPoly(mask, chessboardEdge, 255, 1)
-		extracted = np.zeros_like(img)
-		extracted[mask == 255] = img[mask == 255]
+		extracted = np.zeros_like(self.image)
+		extracted[mask == 255] = self.image[mask == 255]
 
 		if debug:
 			# Show image with mask drawn
@@ -94,8 +91,9 @@ class BoardRecognition:
 
 		return extracted
 
-	def findEdges(self, image):
-		edges = cv2.Canny(image, 60, 100, None, 3)
+	@staticmethod
+	def findEdges(mask_image):
+		edges = cv2.Canny(mask_image, 60, 100, None, 3)
 
 		if debug:
 			# Show image with edges drawn
@@ -103,15 +101,15 @@ class BoardRecognition:
 			cv2.waitKey(0)
 			cv2.destroyAllWindows()
 
-		colorEdges = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
-		return edges, colorEdges
+		color_edges = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+		return edges, color_edges
 
 	def rotateImg(self, edges):
-		lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 100, np.array([]), self.sqscale * 2, self.sqscale * 3)
+		lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 100, np.array([]), self.square_scale * 2, self.square_scale * 3)
 		a, b, c = lines.shape
 		angles = []
-		for l in range(a):
-			[[x1, y1, x2, y2]] = lines[l]
+		for i in range(a):
+			[[x1, y1, x2, y2]] = lines[i]
 			ang_newLine = Line(x1, x2, y1, y2)
 			angles.append(ang_newLine.get_angle())
 
@@ -124,23 +122,23 @@ class BoardRecognition:
 		rot_bgr = cv2.cvtColor(rot_img, cv2.COLOR_GRAY2BGR)
 		return rot_img, rot_bgr
 
-	def findLines(self, edges, colorEdges):
-		lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 100, np.array([]), self.sqscale * 2, self.sqscale * 3)
+	def findLines(self, edges, color_edges):
+		lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 100, np.array([]), self.square_scale * 2, self.square_scale * 3)
 		a, b, c = lines.shape
 		for i in range(a):
-			cv2.line(colorEdges, (lines[i][0][0], lines[i][0][1]), (lines[i][0][2], lines[i][0][3]), (0, 255, 0), 2,
+			cv2.line(color_edges, (lines[i][0][0], lines[i][0][1]), (lines[i][0][2], lines[i][0][3]), (0, 255, 0), 2,
 					 cv2.LINE_AA)
 
 		if debug:
 			# Show image with lines drawn
-			cv2.imshow("Lines", colorEdges)
+			cv2.imshow("Lines", color_edges)
 			cv2.waitKey(0)
 			cv2.destroyAllWindows()
 
 		horizontal = []
 		vertical = []
-		for l in range(a):
-			[[x1, y1, x2, y2]] = lines[l]
+		for i in range(a):
+			[[x1, y1, x2, y2]] = lines[i]
 			newLine = Line(x1, x2, y1, y2)
 			if newLine.orientation == 'horizontal':
 				horizontal.append(newLine)
@@ -149,7 +147,7 @@ class BoardRecognition:
 
 		return horizontal, vertical
 
-	def findCorners(self, horizontal, vertical, colorEdges):
+	def findCorners(self, horizontal, vertical, color_edges):
 		corners = []
 		for v in vertical:
 			for h in horizontal:
@@ -160,24 +158,24 @@ class BoardRecognition:
 		for c in corners:
 			matchingFlag = False
 			for d in dedupeCorners:
-				if math.sqrt((d[0] - c[0]) * (d[0] - c[0]) + (d[1] - c[1]) * (d[1] - c[1])) < self.sqscale * 0.3:
+				if math.sqrt((d[0] - c[0]) * (d[0] - c[0]) + (d[1] - c[1]) * (d[1] - c[1])) < self.square_scale * 0.3:
 					matchingFlag = True
 					break
 			if not matchingFlag:
 				dedupeCorners.append(c)
 
 		for d in dedupeCorners:
-			cv2.circle(colorEdges, (d[0], d[1]), 10, (0, 0, 255))
+			cv2.circle(color_edges, (d[0], d[1]), 10, (0, 0, 255))
 
 		if debug:
 			# Show image with corners circled
-			cv2.imshow("Corners", colorEdges)
+			cv2.imshow("Corners", color_edges)
 			cv2.waitKey(0)
 			cv2.destroyAllWindows()
 
 		return dedupeCorners
 
-	def findSquares(self, corners, colorEdges):
+	def findSquares(self, corners, color_edges):
 		corners.sort(key=lambda x: x[0])
 		rows = [[], [], [], [], [], [], [], [], [], [], []]
 		r = 0
@@ -203,15 +201,15 @@ class BoardRecognition:
 				c4 = rows[r + 1 + 1][c + 1 + 1]
 
 				position = letters[r] + numbers[7 - c]
-				newSquare = Square(colorEdges, c1, c2, c3, c4, position, self.sqscale)
-				newSquare.draw(colorEdges, (0, 0, 255), 2)
-				newSquare.drawROI(colorEdges, (255, 0, 0), 2)
-				newSquare.classify(colorEdges)
+				newSquare = Square(color_edges, c1, c2, c3, c4, position, self.square_scale)
+				newSquare.draw(color_edges, (0, 0, 255), 2)
+				newSquare.drawROI(color_edges, (255, 0, 0), 2)
+				newSquare.classify(color_edges)
 				Squares.append(newSquare)
 
 		if debug:
 			# Show image with squares and ROI drawn and position labelled
-			cv2.imshow("Squares", colorEdges)
+			cv2.imshow("Squares", color_edges)
 			cv2.waitKey(0)
 			cv2.destroyAllWindows()
 
