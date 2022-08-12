@@ -1,13 +1,14 @@
-import tkinter as tk
-from tkinter import *
 import threading
 import time
+import tkinter as tk
+
 import cv2
 
 LARGE_FONT = ("system", 20)
 MED_FONT = ("system", 12)
 SMALL_FONT = ("system", 8)
 lock = threading.Lock()
+
 
 class Proc:
 	def __init__(self):

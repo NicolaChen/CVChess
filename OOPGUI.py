@@ -1,7 +1,8 @@
+import threading
 import tkinter as tk
 from tkinter import *
+
 from Game import Game
-import threading
 
 # set font sizes
 LARGE_FONT = ("system", 20)
@@ -353,11 +354,8 @@ class ChooseDifficultyPage(tk.Frame):
 
 	def setMaster(self,controller):
 		controller.game.chessEngine.time=10
-		
-		
-		
-		
-		
+
+
 class ChoosePromotionPage(tk.Frame):
 	'''
 	Prompts user to choose to which piece they would like to promote their pawn
