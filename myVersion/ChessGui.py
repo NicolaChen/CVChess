@@ -1,4 +1,3 @@
-import time
 import tkinter as tk
 from tkinter import *
 
@@ -35,6 +34,8 @@ class Application(tk.Tk):
     def showFrame(self, f):
         frame = self.frames[f]
         frame.tkraise()
+        if hasattr(frame, 'run'):
+            frame.run()
 
     def destroyFrame(self):
         pass  # TODO: Figure out how to kill the program
@@ -160,21 +161,25 @@ class PlayerMovePage(tk.Frame):
         resign_button = tk.Button(self, text="Resign", font=MED_FONT,
                                   command=lambda: [controller.showFrame(ConfirmPage)])
         resign_button.pack()
-        self.waitPlayerMove(controller)
+
+        self.ctr = controller
+
+    def run(self):
+        self.waitPlayerMove(self.ctr)
 
     def waitPlayerMove(self, controller):
         """
         Detect player's move and show in label, then check the game
         """
-        # TODO: Combine detect&move, new function generates Game.playerMove
-        controller.game.detectPlayerMove()
-
         show_move_label = tk.Label(self, text="Detect your move is:", font=LARGE_FONT)
         show_move_label.pack()
-
-        player_move_label = tk.Label(self, textvariable=controller.game.playerMove, font=MED_FONT)
+        text = StringVar()
+        text.set("Unknown")
+        player_move_label = tk.Label(self, textvariable=text, font=MED_FONT)
         player_move_label.pack()
-
+        # TODO: Combine detect&move, new function generates Game.playerMove
+        controller.game.detectPlayerMove()
+        text.set(controller.game.player_move)
         self.checkValid_P(controller)
 
     @staticmethod
@@ -206,11 +211,15 @@ class EngineMovePage(tk.Frame):
         move_label = tk.Label(self, textvariable=controller.move, font=MED_FONT)
         move_label.pack()
 
-        # TODO: Add Servo move control codes
-        controller.game.updateCurrent()
-        controller.game.checkEngineMove()  # Involving Game.boardMatchError
+        self.ctr = controller
 
-        self.checkValid_E(controller)
+    def run(self):
+
+        # TODO: Add Servo move control codes
+        self.ctr.game.updateCurrent()
+        self.ctr.game.checkEngineMove()  # Involving Game.boardMatchError
+
+        self.checkValid_E(self.ctr)
 
     @staticmethod
     def checkValid_E(controller):
@@ -342,16 +351,27 @@ class PlayerMoveErrorPage(tk.Frame):
 
         error_label = tk.Label(self, text="Error! Invalid move!\nMay be caused by camera, retry in", font=LARGE_FONT)
         error_label.pack()
+        self.countdown_label = tk.Label(self, text="5 s")
+        self.countdown_label.pack()
 
-        self.countdown(controller)
+        self.ctr = controller
 
-    def countdown(self, controller):
-        for cnt in reversed(range(5)):
-            countdown_label = tk.Label(self, textvariable=cnt, font=MED_FONT)
-            countdown_label.pack()
-            time.sleep(1)
+    def run(self):
 
-        controller.showFrame(PlayerMovePage)
+        self.after(1000, self.countdown, 5)
+
+    def countdown(self, n):
+        n -= 1
+        clock = self.after(1000, self.countdown, n)
+
+        if n != 0:
+            self.countdown_label["text"] = str(n) + " s"
+
+        else:
+            self.after_cancel(clock)
+            self.countdown_label["text"] = "0"
+
+        self.ctr.showFrame(PlayerMovePage)
 
 
 class InCheckPage(tk.Frame):
@@ -361,16 +381,27 @@ class InCheckPage(tk.Frame):
 
         check_label = tk.Label(self, text="You are in check!\nContinue in", font=LARGE_FONT)
         check_label.pack()
+        self.countdown_label = tk.Label(self, text="5 s")
+        self.countdown_label.pack()
 
-        self.countdown(controller)
+        self.ctr = controller
 
-    def countdown(self, controller):
-        for cnt in reversed(range(5)):
-            countdown_label = tk.Label(self, textvariable=cnt, font=MED_FONT)
-            countdown_label.pack()
-            time.sleep(1)
+    def run(self):
 
-        controller.showFrame(PlayerMovePage)
+        self.after(1000, self.countdown, 5)
+
+    def countdown(self, n):
+        n -= 1
+        clock = self.after(1000, self.countdown, n)
+
+        if n != 0:
+            self.countdown_label["text"] = str(n) + " s"
+
+        else:
+            self.after_cancel(clock)
+            self.countdown_label["text"] = "0"
+
+        self.ctr.showFrame(PlayerMovePage)
 
 
 class BoardMatchErrorPage(tk.Frame):
@@ -382,15 +413,27 @@ class BoardMatchErrorPage(tk.Frame):
                                      font=LARGE_FONT)
         match_error_label.pack()
 
-        self.countdown(controller)
+        self.countdown_label = tk.Label(self, text="5 s")
+        self.countdown_label.pack()
 
-    def countdown(self, controller):
-        for cnt in reversed(range(5)):
-            countdown_label = tk.Label(self, textvariable=cnt, font=MED_FONT)
-            countdown_label.pack()
-            time.sleep(1)
+        self.ctr = controller
 
-        controller.showFrame(EngineMovePage)
+    def run(self):
+
+        self.after(1000, self.countdown, 5)
+
+    def countdown(self, n):
+        n -= 1
+        clock = self.after(1000, self.countdown, n)
+
+        if n != 0:
+            self.countdown_label["text"] = str(n) + " s"
+
+        else:
+            self.after_cancel(clock)
+            self.countdown_label["text"] = "0"
+
+        self.ctr.showFrame(EngineMovePage)
 
 
 # Start chess game

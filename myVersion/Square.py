@@ -86,7 +86,9 @@ class Square:
 		return diff
 
 	def classify(self, image):
+		"""
 
+		"""
 		rgb = self.roiColor(image)
 
 		sum = 0
