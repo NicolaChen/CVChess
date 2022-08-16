@@ -218,12 +218,14 @@ class EngineMovePage(tk.Frame):
         self.ctr = controller
 
     def run(self):
-
         # TODO: Add Servo move control codes
+        self.after(1000, self.engineCheckBoard)
+
+    def engineCheckBoard(self):
         self.ctr.game.updateCurrent()
         self.ctr.game.checkEngineMove()  # Involving Game.boardMatchError
 
-        self.after(1000, self.checkValid_E)
+        self.after(5000, self.checkValid_E)
 
     def checkValid_E(self):
 

@@ -62,7 +62,7 @@ class Game:
         time.sleep(2)  # Give camera some time to focus, can be dismissed
         while True:
             self.current = self.camera.getFrame()
-            if abs(cv2.Laplacian(self.current, cv2.CV_64F).var() - self.camera.laplacian_threshold) < 20:
+            if abs(cv2.Laplacian(self.current, cv2.CV_64F).var() - self.camera.laplacian_threshold) < 50:
                 break
 
     def engineMove(self):
@@ -104,7 +104,7 @@ class Game:
             if abs(self.board_perimeter - contour_perimeter) < self.contour_threshold:
                 print("Detect invasion finish")
                 cnt += 1
-                if cnt >= 100:
+                if cnt >= 20:
                     break
         self.playerMove()
 
@@ -132,7 +132,7 @@ class Game:
         self.previous = self.current
         for i in range(30):
             self.current = self.camera.getFrame()
-            if abs(cv2.Laplacian(self.current, cv2.CV_64F).var() - self.camera.laplacian_threshold) < 20:
+            if abs(cv2.Laplacian(self.current, cv2.CV_64F).var() - self.camera.laplacian_threshold) < 50:
                 break
 
     def checkEngineMove(self):
@@ -142,3 +142,23 @@ class Game:
             self.board_match_error = True
         else:
             self.board_match_error = False
+
+    def playerPromotion(self, move):
+        print(move)
+        code = self.chess_engine.updateMove(move)
+        if code == 1:
+            # illegal move prompt GUI to open PlayerMoveError Page
+            print("Error")
+            self.player_move_error = True
+        else:
+            self.player_move_error = False
+
+            # write to Game.txt file
+            f = open("ChessRecord.txt", "a+")
+            f.write(chess.Move.from_uci(move).uci() + "\r\n")
+            f.close()
+
+        # check Game Over
+        if self.chess_engine.engBoard.is_checkmate():
+            self.winner = "You win!"
+            self.over = True

@@ -205,6 +205,8 @@ class Board:
                     self.promo = True
                 if square_one.position[1:2] == '7' and square_two.position[1:2] == '8':
                     self.promo = True
+                else:
+                    self.promo = False
             self.move = square_one.position + square_two.position
             if debug:
                 square_two.draw(copy, (0, 255, 0), 1)
@@ -221,6 +223,8 @@ class Board:
                     self.promo = True
                 if square_one.position[1:2] == '8' and square_two.position[1:2] == '7':
                     self.promo = True
+                else:
+                    self.promo = False
             self.move = square_two.position + square_one.position
             if debug:
                 square_one.draw(copy, (0, 255, 0), 1)
