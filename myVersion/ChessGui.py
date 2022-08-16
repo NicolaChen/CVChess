@@ -24,7 +24,9 @@ class Application(tk.Tk):
         self.winner = StringVar()
         self.winner.set("Engine Wins!")
 
-        for F in (StartGamePage, InitializePage, SetBoardPage):
+        for F in (StartGamePage, InitializePage, SetBoardPage, ChooseDifficultyPage, ChooseColorPage, PlayerMovePage,
+                  EngineMovePage, ConfirmPage, GameOverPage, ChoosePromotionPage, PlayerMoveErrorPage, InCheckPage,
+                  BoardMatchErrorPage):
             frame = F(gui, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
@@ -109,28 +111,28 @@ class ChooseDifficultyPage(tk.Frame):
 
     @staticmethod
     def setEasy(controller):
-        controller.game.chessEngine.engine.configure({"Skill Level": 0})
-        controller.game.chessEngine.time = 0.01
+        controller.game.chess_engine.engine.configure({"Skill Level": 0})
+        controller.game.chess_engine.time = 0.01
 
     @staticmethod
     def setIntermediate(controller):
-        controller.game.chessEngine.engine.configure({"Skill Level": 5})
-        controller.game.chessEngine.time = 0.1
+        controller.game.chess_engine.engine.configure({"Skill Level": 5})
+        controller.game.chess_engine.time = 0.1
 
     @staticmethod
     def setHard(controller):
-        controller.game.chessEngine.engine.configure({"Skill Level": 10})
-        controller.game.chessEngine.time = 1
+        controller.game.chess_engine.engine.configure({"Skill Level": 10})
+        controller.game.chess_engine.time = 1
 
     @staticmethod
     def setExtreme(controller):
-        controller.game.chessEngine.engine.configure({"Skill Level": 15})
-        controller.game.chessEngine.time = 3
+        controller.game.chess_engine.engine.configure({"Skill Level": 15})
+        controller.game.chess_engine.time = 3
 
     @staticmethod
     def setMaster(controller):
-        controller.game.chessEngine.engine.configure({"Skill Level": 20})
-        controller.game.chessEngine.time = 5
+        controller.game.chess_engine.engine.configure({"Skill Level": 20})
+        controller.game.chess_engine.time = 5
 
 
 class ChooseColorPage(tk.Frame):
@@ -162,42 +164,44 @@ class PlayerMovePage(tk.Frame):
                                   command=lambda: [controller.showFrame(ConfirmPage)])
         resign_button.pack()
 
+        show_move_label = tk.Label(self, text="Detect your move is:", font=LARGE_FONT)
+        show_move_label.pack()
+
+        self.text = StringVar()
+        self.text.set("Unknown")
+        player_move_label = tk.Label(self, textvariable=self.text, font=MED_FONT)
+        player_move_label.pack()
+
         self.ctr = controller
 
     def run(self):
-        self.waitPlayerMove(self.ctr)
+        self.text.set("Unknown")
+        self.after(1000, self.waitPlayerMove)
 
-    def waitPlayerMove(self, controller):
+    def waitPlayerMove(self):
         """
         Detect player's move and show in label, then check the game
         """
-        show_move_label = tk.Label(self, text="Detect your move is:", font=LARGE_FONT)
-        show_move_label.pack()
-        text = StringVar()
-        text.set("Unknown")
-        player_move_label = tk.Label(self, textvariable=text, font=MED_FONT)
-        player_move_label.pack()
         # TODO: Combine detect&move, new function generates Game.playerMove
-        controller.game.detectPlayerMove()
-        text.set(controller.game.player_move)
-        self.checkValid_P(controller)
+        self.ctr.game.detectPlayerMove()
+        self.text.set(self.ctr.game.player_move)
+        self.after(5000, self.checkValid_P)
 
-    @staticmethod
-    def checkValid_P(controller):
+    def checkValid_P(self):
         """
         Check whether game is over/promotion/player error, if not, engine moves; contain Frame change
         """
-        if controller.game.over:
-            controller.winner.set(controller.game.winner)
-            controller.showFrame(GameOverPage)
-        elif controller.game.board.promo:
-            controller.showFrame(ChoosePromotionPage)
-        elif controller.game.PlayerMoveError:
-            controller.game.current = controller.game.previous
-            controller.showFrame(PlayerMoveErrorPage)
+        if self.ctr.game.over:
+            self.ctr.winner.set(self.ctr.game.winner)
+            self.ctr.showFrame(GameOverPage)
+        elif self.ctr.game.board.promo:
+            self.ctr.showFrame(ChoosePromotionPage)
+        elif self.ctr.game.player_move_error:
+            self.ctr.game.current = self.ctr.game.previous
+            self.ctr.showFrame(PlayerMoveErrorPage)
         else:
-            controller.move.set(controller.game.engineMove())
-            controller.showFrame(EngineMovePage)
+            self.ctr.move.set(self.ctr.game.engineMove())
+            self.ctr.showFrame(EngineMovePage)
 
 
 class EngineMovePage(tk.Frame):
@@ -219,21 +223,20 @@ class EngineMovePage(tk.Frame):
         self.ctr.game.updateCurrent()
         self.ctr.game.checkEngineMove()  # Involving Game.boardMatchError
 
-        self.checkValid_E(self.ctr)
+        self.after(1000, self.checkValid_E)
 
-    @staticmethod
-    def checkValid_E(controller):
+    def checkValid_E(self):
 
-        if controller.game.over:
-            controller.winner.set(controller.game.winner)
-            controller.show_frame(GameOverPage)
-        elif controller.game.isCheck:
-            controller.show_frame(InCheckPage)
-        elif controller.game.boardMatchError:
-            controller.game.current = controller.game.previous
-            controller.show_frame(BoardMatchErrorPage)
+        if self.ctr.game.over:
+            self.ctr.winner.set(self.ctr.game.winner)
+            self.ctr.showFrame(GameOverPage)
+        elif self.ctr.game.is_check:
+            self.ctr.showFrame(InCheckPage)
+        elif self.ctr.game.board_match_error:
+            self.ctr.game.current = self.ctr.game.previous
+            self.ctr.showFrame(BoardMatchErrorPage)
         else:
-            controller.show_frame(PlayerMovePage)
+            self.ctr.showFrame(PlayerMovePage)
 
 
 class ConfirmPage(tk.Frame):
@@ -294,11 +297,11 @@ class ChoosePromotionPage(tk.Frame):
         controller.game.board.move = controller.game.board.move + 'q'
         controller.game.playerPromotion(controller.game.board.move)
 
-        if controller.game.PlayerMoveError:
+        if controller.game.player_move_error:
             controller.game.current = controller.game.previous
             controller.showFrame(PlayerMoveErrorPage)
         else:
-            controller.move.set(controller.game.CPUMove())
+            controller.move.set(controller.game.engineMove())
             controller.showFrame(EngineMovePage)
 
     @staticmethod
@@ -308,11 +311,11 @@ class ChoosePromotionPage(tk.Frame):
         controller.game.board.move = controller.game.board.move + 'r'
         controller.game.playerPromotion(controller.game.board.move)
 
-        if controller.game.PlayerMoveError:
+        if controller.game.player_move_error:
             controller.game.current = controller.game.previous
             controller.showFrame(PlayerMoveErrorPage)
         else:
-            controller.move.set(controller.game.CPUMove())
+            controller.move.set(controller.game.engineMove())
             controller.showFrame(EngineMovePage)
 
     @staticmethod
@@ -322,11 +325,11 @@ class ChoosePromotionPage(tk.Frame):
         controller.game.board.move = controller.game.board.move + 'b'
         controller.game.playerPromotion(controller.game.board.move)
 
-        if controller.game.PlayerMoveError:
+        if controller.game.player_move_error:
             controller.game.current = controller.game.previous
             controller.showFrame(PlayerMoveErrorPage)
         else:
-            controller.move.set(controller.game.CPUMove())
+            controller.move.set(controller.game.engineMove())
             controller.showFrame(EngineMovePage)
 
     @staticmethod
@@ -336,11 +339,11 @@ class ChoosePromotionPage(tk.Frame):
         controller.game.board.move = controller.game.board.move + 'n'
         controller.game.playerPromotion(controller.game.board.move)
 
-        if controller.game.PlayerMoveError:
+        if controller.game.player_move_error:
             controller.game.current = controller.game.previous
             controller.showFrame(PlayerMoveErrorPage)
         else:
-            controller.move.set(controller.game.CPUMove())
+            controller.move.set(controller.game.engineMove())
             controller.showFrame(EngineMovePage)
 
 
@@ -357,7 +360,7 @@ class PlayerMoveErrorPage(tk.Frame):
         self.ctr = controller
 
     def run(self):
-
+        self.countdown_label["text"] = "5 s"
         self.after(1000, self.countdown, 5)
 
     def countdown(self, n):
@@ -370,8 +373,7 @@ class PlayerMoveErrorPage(tk.Frame):
         else:
             self.after_cancel(clock)
             self.countdown_label["text"] = "0"
-
-        self.ctr.showFrame(PlayerMovePage)
+            self.ctr.showFrame(PlayerMovePage)
 
 
 class InCheckPage(tk.Frame):
@@ -387,7 +389,7 @@ class InCheckPage(tk.Frame):
         self.ctr = controller
 
     def run(self):
-
+        self.countdown_label["text"] = "5 s"
         self.after(1000, self.countdown, 5)
 
     def countdown(self, n):
@@ -400,8 +402,7 @@ class InCheckPage(tk.Frame):
         else:
             self.after_cancel(clock)
             self.countdown_label["text"] = "0"
-
-        self.ctr.showFrame(PlayerMovePage)
+            self.ctr.showFrame(PlayerMovePage)
 
 
 class BoardMatchErrorPage(tk.Frame):
@@ -419,7 +420,7 @@ class BoardMatchErrorPage(tk.Frame):
         self.ctr = controller
 
     def run(self):
-
+        self.countdown_label["text"] = "5 s"
         self.after(1000, self.countdown, 5)
 
     def countdown(self, n):
@@ -432,8 +433,7 @@ class BoardMatchErrorPage(tk.Frame):
         else:
             self.after_cancel(clock)
             self.countdown_label["text"] = "0"
-
-        self.ctr.showFrame(EngineMovePage)
+            self.ctr.showFrame(EngineMovePage)
 
 
 # Start chess game

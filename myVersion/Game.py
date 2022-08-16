@@ -19,13 +19,12 @@ class Game:
         self.contour_threshold = 120
         self.current = None
         self.previous = None
-        self.engine_last_move = None
+        self.engine_latest_move = None
         self.chess_engine = ChessEng()
         self.is_check = False
         self.winner = ""
         self.over = False
         self.player_move = "Unknown"
-
         self.player_move_error = False
         self.board_match_error = False
 
@@ -63,19 +62,19 @@ class Game:
         time.sleep(2)  # Give camera some time to focus, can be dismissed
         while True:
             self.current = self.camera.getFrame()
-            if cv2.Laplacian(self.current, cv2.CV_64F).var() > 3E8 / (self.current.shape[1] * self.current.shape[0]):
+            if abs(cv2.Laplacian(self.current, cv2.CV_64F).var() - self.camera.laplacian_threshold) < 20:
                 break
 
     def engineMove(self):
         """
         Feeds current board to engine; Returns engine's new move
         """
-        self.engine_last_move = self.chess_engine.feedToEngine()
+        self.engine_latest_move = self.chess_engine.feedToEngine()
         self.is_check = self.chess_engine.engBoard.is_check()
         if self.chess_engine.engBoard.is_checkmate():
             self.winner = "Engine Wins!"
             self.over = True
-        return self.engine_last_move
+        return self.engine_latest_move
 
     def detectPlayerMove(self):
         """
@@ -93,34 +92,26 @@ class Game:
             if abs(self.board_perimeter - contour_perimeter) > self.contour_threshold:
                 print("Detect object invasion")
                 break
-
+        cnt = 0
         while True:
-            # detects end of invasion， 10 times make sure
+            # detects end of invasion， 100 times make sure
             self.current = self.camera.getFrame()
             gray = cv2.cvtColor(self.current, cv2.COLOR_BGR2GRAY)
             blur = cv2.GaussianBlur(gray, (17, 17), 0)
             ret1, th1 = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             ret2, th2 = cv2.threshold(blur, ret1 - 20, 255, cv2.THRESH_BINARY)
             max_contour, square_scale, contour_perimeter = BoardRecognition.getContour(self.current, th2)
-            cnt = 0
             if abs(self.board_perimeter - contour_perimeter) < self.contour_threshold:
                 print("Detect invasion finish")
                 cnt += 1
-                if cnt >= 10:
+                if cnt >= 100:
                     break
+        self.playerMove()
 
     def playerMove(self):
         """
         Finds difference between previous and current, deduces player's move and updates move to engine
         """
-        # self.previous = self.current
-        # for i in range(30):
-        #     self.current = self.camera.getFrame()
-        #     if abs(cv2.mean(self.current)[0] + cv2.mean(self.current)[1] + cv2.mean(self.current)[2] -
-        #            cv2.mean(self.previous)[0] - cv2.mean(self.previous)[1] - cv2.mean(self.previous)[
-        #                2]) < 15 and cv2.Laplacian(self.current, cv2.CV_64F).var() > 3E8 / (
-        #             self.current.shape[1] * self.current.shape[0]):
-        #         break
         self.player_move = self.board.determineChanges(self.previous, self.current)
         code = self.chess_engine.updateMove(self.player_move)
         if code == 1:
@@ -136,3 +127,18 @@ class Game:
         if self.chess_engine.engBoard.is_checkmate():
             self.winner = "You win!"
             self.over = True
+
+    def updateCurrent(self):
+        self.previous = self.current
+        for i in range(30):
+            self.current = self.camera.getFrame()
+            if abs(cv2.Laplacian(self.current, cv2.CV_64F).var() - self.camera.laplacian_threshold) < 20:
+                break
+
+    def checkEngineMove(self):
+        detect_move = self.board.determineChanges(self.previous, self.current)
+        if detect_move != self.engine_latest_move.uci():
+            print("D: " + detect_move + "\nE: " + self.engine_latest_move.uci())
+            self.board_match_error = True
+        else:
+            self.board_match_error = False

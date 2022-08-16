@@ -22,7 +22,7 @@ class Application(tk.Tk):
         self.winner = StringVar()
         self.winner.set("Engine Wins!")
 
-        for F in (StartGamePage, TestPage):
+        for F in (StartGamePage, TestPage, Test2Page):
             frame = F(gui, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
@@ -63,19 +63,34 @@ class TestPage(tk.Frame):
                                     font=LARGE_FONT)
         self.error_label.pack()
 
+        self.countdown_label = tk.Label(self, text="5 s")
+        self.countdown_label.pack()
+
+        self.ctr = controller
+
     def run(self):
-        self.after(5000, self.countdown, 60)
+
+        self.after(1000, self.countdown, 5)
 
     def countdown(self, n):
         n -= 1
         clock = self.after(1000, self.countdown, n)
 
         if n != 0:
-            self.error_label["text"] = str(n)
+            self.countdown_label["text"] = str(n) + " s"
 
         else:
             self.after_cancel(clock)
-            self.error_label["text"] = "Finish"
+            self.countdown_label["text"] = "0"
+            self.after(1000, self.ctr.showFrame, Test2Page)  # 或者可以直接运行
+
+
+class Test2Page(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+
+        tk.Label(self, text="Done").pack()
+        tk.Button(self, text="return", command=lambda: [controller.showFrame(TestPage)]).pack()
 
 
 app = Application()

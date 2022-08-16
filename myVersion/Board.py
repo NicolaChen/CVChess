@@ -2,7 +2,7 @@ import math
 
 import cv2
 
-debug = False
+debug = True
 
 
 class Board:
@@ -13,11 +13,11 @@ class Board:
     def __init__(self, squares):
 
         self.squares = squares
-        self.boardMatrix = []
+        self.board_matrix = []
         self.promotion = 'q'
         self.promo = False
         self.move = "e2e4"
-        self.distThresh = 50
+        self.dist_threshold = 50
 
     def draw(self, image):
         """
@@ -45,7 +45,7 @@ class Board:
             self.squares[8 * i + 7].state = white[i]
 
         for square in self.squares:
-            self.boardMatrix.append(square.state)
+            self.board_matrix.append(square.state)
 
     def determineChanges(self, previous, current):
         """
@@ -67,7 +67,7 @@ class Board:
         for sq in self.squares:
             distance = sq.roiDiff('color', previous, current)
 
-            if distance > self.distThresh:
+            if distance > self.dist_threshold:
                 state_change.append(sq)
             if distance > largest_dist:
                 # update squares with the largest change in color
@@ -89,10 +89,14 @@ class Board:
             square_four = state_change[3]
 
             # check White short side castle
-            if square_one.position == "e1" or square_two.position == "e1" or square_three.position == "e1" or square_four.position == "e1":
-                if square_one.position == "f1" or square_two.position == "f1" or square_three.position == "f1" or square_four.position == "f1":
-                    if square_one.position == "g1" or square_two.position == "g1" or square_three.position == "g1" or square_four.position == "g1":
-                        if square_one.position == "h1" or square_two.position == "h1" or square_three.position == "h1" or square_four.position == "h1":
+            if square_one.position == "e1" or square_two.position == "e1" or square_three.position == "e1" \
+                    or square_four.position == "e1":
+                if square_one.position == "f1" or square_two.position == "f1" or square_three.position == "f1" \
+                        or square_four.position == "f1":
+                    if square_one.position == "g1" or square_two.position == "g1" or square_three.position == "g1" \
+                            or square_four.position == "g1":
+                        if square_one.position == "h1" or square_two.position == "h1" or square_three.position == "h1" \
+                                or square_four.position == "h1":
                             self.move = "e1g1"
                             print(self.move)
                             if debug:
@@ -107,9 +111,12 @@ class Board:
                             return self.move
 
                 # white long side castle
-                if square_one.position == "d1" or square_two.position == "d1" or square_three.position == "d1" or square_four.position == "d1":
-                    if square_one.position == "c1" or square_two.position == "c1" or square_three.position == "c1" or square_four.position == "c1":
-                        if square_one.position == "a1" or square_two.position == "a1" or square_three.position == "a1" or square_four.position == "a1":
+                if square_one.position == "d1" or square_two.position == "d1" or square_three.position == "d1" \
+                        or square_four.position == "d1":
+                    if square_one.position == "c1" or square_two.position == "c1" or square_three.position == "c1" \
+                            or square_four.position == "c1":
+                        if square_one.position == "a1" or square_two.position == "a1" or square_three.position == "a1" \
+                                or square_four.position == "a1":
 
                             self.move = "e1c1"
                             print(self.move)
@@ -125,10 +132,14 @@ class Board:
                             return self.move
 
             # check Black short side castle
-            if square_one.position == "e8" or square_two.position == "e8" or square_three.position == "e8" or square_four.position == "e8":
-                if square_one.position == "f8" or square_two.position == "f8" or square_three.position == "f8" or square_four.position == "f8":
-                    if square_one.position == "g8" or square_two.position == "g8" or square_three.position == "g8" or square_four.position == "g8":
-                        if square_one.position == "h8" or square_two.position == "h8" or square_three.position == "h8" or square_four.position == "h8":
+            if square_one.position == "e8" or square_two.position == "e8" or square_three.position == "e8" \
+                    or square_four.position == "e8":
+                if square_one.position == "f8" or square_two.position == "f8" or square_three.position == "f8" \
+                        or square_four.position == "f8":
+                    if square_one.position == "g8" or square_two.position == "g8" or square_three.position == "g8" \
+                            or square_four.position == "g8":
+                        if square_one.position == "h8" or square_two.position == "h8" or square_three.position == "h8" \
+                                or square_four.position == "h8":
                             self.move = "e8g8"
                             print(self.move)
                             if debug:
@@ -143,9 +154,12 @@ class Board:
                             return self.move
 
                 # Black long side castle
-                if square_one.position == "d8" or square_two.position == "d8" or square_three.position == "d8" or square_four.position == "d8":
-                    if square_one.position == "c8" or square_two.position == "c8" or square_three.position == "c8" or square_four.position == "c8":
-                        if square_one.position == "a8" or square_two.position == "a8" or square_three.position == "a8" or square_four.position == "a8":
+                if square_one.position == "d8" or square_two.position == "d8" or square_three.position == "d8" \
+                        or square_four.position == "d8":
+                    if square_one.position == "c8" or square_two.position == "c8" or square_three.position == "c8" \
+                            or square_four.position == "c8":
+                        if square_one.position == "a8" or square_two.position == "a8" or square_three.position == "a8" \
+                                or square_four.position == "a8":
                             self.move = "e8c8"
                             print(self.move)
                             if debug:
@@ -167,7 +181,7 @@ class Board:
             square_one.draw(copy, (255, 0, 0), 1)
             square_two.draw(copy, (255, 0, 0), 1)
             cv2.imshow("previous", previous)
-            cv2.imshow("identified", copy)
+            # cv2.imshow("identified", copy)
 
         # get colors for each square from each photo
         one_curr = square_one.roiColor(current)

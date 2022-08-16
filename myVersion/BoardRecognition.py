@@ -7,7 +7,7 @@ from Board import Board
 from Line import Line
 from Square import Square
 
-debug = True
+debug = False
 
 
 class BoardRecognition:
@@ -23,7 +23,8 @@ class BoardRecognition:
         while len(corners) < 121:
             while True:
                 self.image = self.cam.getFrame()
-                if cv2.Laplacian(self.image, cv2.CV_64F).var() > 3E8 / (self.image.shape[1] * self.image.shape[0]):
+                print(cv2.Laplacian(self.image, cv2.CV_64F).var())
+                if abs(cv2.Laplacian(self.image, cv2.CV_64F).var() - self.cam.laplacian_threshold) < 20:
                     break
             thresh_image = self.cleanImage(self.image)
             max_contour, self.square_scale, self.contour_perimeter = self.getContour(self.image, thresh_image)
@@ -63,7 +64,10 @@ class BoardRecognition:
         for c in range(len(contours)):
             area = cv2.contourArea(contours[c])
             perimeter = cv2.arcLength(contours[c], True)
-            ratio = area / perimeter
+            if perimeter > 0:
+                ratio = area / perimeter
+            else:
+                continue
             if ratio > max_ratio:
                 max_contour = contours[c]
                 max_ratio = ratio
@@ -208,7 +212,7 @@ class BoardRecognition:
 
                 position = letters[r] + numbers[7 - c]
                 new_squares = Square(color_edges, c1, c2, c3, c4, position, self.square_scale)
-                new_squares.draw(color_edges, (0, 0, 255), 2)
+                new_squares.draw(color_edges, (0, 0, 255), 3)
                 new_squares.drawROI(color_edges, (255, 0, 0), 2)
                 new_squares.classify(color_edges)
                 squares.append(new_squares)
